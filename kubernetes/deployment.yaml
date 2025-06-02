@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: carvilla-web
+  namespace: default
+  labels:
+    app: carvilla-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: carvilla-web
+  template:
+    metadata:
+      labels:
+        app: carvilla-web
+    spec:
+      containers:
+      - name: carvilla-web
+        image: 172.31.33.84:30500/carvilla:BUILD_NUMBER
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "256Mi"
+          requests:
+            cpu: "0.2"
+            memory: "128Mi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
