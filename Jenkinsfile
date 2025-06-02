@@ -80,6 +80,9 @@ spec:
         stage('Checkout') {
             steps {
                 container('ubuntu') {
+                    script {
+                        deleteDir()
+                    }
                     sh '''
                     rm -rf *
                     git clone https://github.com/DawudRizky/CI-CD-pipeline.git .
