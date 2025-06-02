@@ -34,10 +34,10 @@ spec:
     }
     
     environment {
-        REGISTRY_URL = "172.31.72.100:30500"
+        REGISTRY_URL = "172.31.70.225:30500"
         IMAGE_NAME = "carvilla"
         APP_PORT = "30400"
-        K8S_MASTER = "172.31.72.100"
+        K8S_MASTER = "172.31.70.225"
     }
     
     stages {
@@ -150,7 +150,7 @@ spec:
     spec:
       containers:
       - name: carvilla-web
-        image: 172.31.72.100:30500/carvilla:BUILD_NUMBER
+        image: 172.31.70.225:30500/carvilla:BUILD_NUMBER
         imagePullPolicy: Always
         ports:
         - containerPort: 80
