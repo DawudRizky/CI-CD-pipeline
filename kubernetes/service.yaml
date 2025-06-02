@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: carvilla-web-service
   namespace: default
+  labels:
+    app: carvilla-web
 spec:
   type: NodePort
   selector:
