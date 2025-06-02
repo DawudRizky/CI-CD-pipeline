@@ -45,22 +45,22 @@ spec:
             steps {
                 container('ubuntu') {
                     sh '''
-                    # Update package lists
-                    apt-get update
+                    // # Update package lists
+                    // apt-get update
                     
-                    # Install prerequisites
-                    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release git
+                    // # Install prerequisites
+                    // apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release git
                     
-                    # Install Docker CLI
-                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-                    echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-                    apt-get update
-                    apt-get install -y docker-ce-cli
+                    // # Install Docker CLI
+                    // curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+                    // echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+                    // apt-get update
+                    // apt-get install -y docker-ce-cli
                     
-                    # Install kubectl
-                    curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
-                    chmod +x kubectl
-                    mv kubectl /usr/local/bin/
+                    // # Install kubectl
+                    // curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
+                    // chmod +x kubectl
+                    // mv kubectl /usr/local/bin/
                     
                     # Configure Docker for insecure registry
                     mkdir -p ~/.docker
