@@ -11,7 +11,7 @@ metadata:
 spec:
   containers:
     - name: ubuntu
-      image: ubuntu:20.04
+      image: 172.31.70.225:30500/ci-agent:latest
       command:
         - cat
       tty: true
