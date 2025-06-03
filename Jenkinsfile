@@ -159,7 +159,7 @@ EOF
                     fi
                     
                     # Replace BUILD_NUMBER with actual build number
-                    sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g kubernetes/deployment.yaml
+                    sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g" kubernetes/deployment.yaml
 
                     echo "Applying Kubernetes manifests..."
                     kubectl apply -f kubernetes/deployment.yaml || echo "Deployment failed, but continuing"
