@@ -160,22 +160,16 @@ EOF
                     
                     # Replace BUILD_NUMBER with actual build number
                     sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g" kubernetes/deployment.yaml
-                    
-                    echo "Contents of deployment.yaml:"
-                    cat kubernetes/deployment.yaml
-                    
-                    echo "Contents of service.yaml:"
-                    cat kubernetes/service.yaml
-                    
-                    echo "Trying kubectl configuration..."
-                    kubectl get nodes || echo "Failed to get nodes, but continuing"
-                    
+
                     echo "Applying Kubernetes manifests..."
                     kubectl apply -f kubernetes/deployment.yaml || echo "Deployment failed, but continuing"
                     kubectl apply -f kubernetes/service.yaml || echo "Service deployment failed, but continuing"
-                    
-                    echo "Waiting for deployment to complete..."
-                    kubectl rollout status deployment/carvilla-web --timeout=60s || echo "Rollout status check failed, but continuing"
+
+                    echo "Waiting for deployment rollout to complete..."
+                    kubectl rollout status deployment/carvilla-web --timeout=120s || echo "Rollout status check failed, but continuing"
+
+                    echo "Waiting for all pods to be ready..."
+                    kubectl wait --for=condition=Ready pods -l app=carvilla-web --timeout=120s || echo "Pods not ready in time, but continuing"
                     '''
                 }
             }
@@ -188,13 +182,32 @@ EOF
                     echo "Verifying deployment..."
                     kubectl get pods -l app=carvilla-web -n default || echo "Failed to get pods"
                     kubectl get svc carvilla-web-service -n default || echo "Failed to get service"
-                    
-                    # Try to access the app
+
+                    # Wait for service endpoint to be available
+                    echo "Waiting for service endpoint to be available..."
+                    for i in {1..12}; do
+                        kubectl get endpoints carvilla-web-service -n default | grep -q '80:' && break
+                        echo "Service endpoint not ready yet, waiting 5s..."
+                        sleep 5
+                    done
+
+                    # Try to access the app with retries
                     apt-get install -y curl
                     echo "Trying to access the application..."
-                    curl -I http://${K8S_MASTER}:${APP_PORT} || echo "Failed to access the application, but deployment might still be in progress"
+                    for i in {1..12}; do
+                        if curl -s -I http://${K8S_MASTER}:${APP_PORT} | grep -q '200\|301\|302'; then
+                            echo "Application is accessible!"
+                            break
+                        else
+                            echo "App not ready yet, retrying in 5s... ($i/12)"
+                            sleep 5
+                        fi
+                        if [ $i -eq 12 ]; then
+                            echo "Failed to access the application after waiting."
+                        fi
+                    done
                     '''
-                    
+
                     echo "==================================================="
                     echo "CarVilla Web App should be accessible at: http://${K8S_MASTER}:${APP_PORT}"
                     echo "==================================================="
