@@ -126,11 +126,12 @@ spec:
                 container('ubuntu') {
                     sh '''
                     echo "Preparing Kubernetes manifest files..."
-                    # Create deployment.yaml if it doesn't exist
-                    if [ ! -f "kubernetes/deployment.yaml" ]; then
-                        echo "Creating deployment.yaml..."
-                        mkdir -p kubernetes
-                        cat > kubernetes/deployment.yaml << "EOF"
+                    
+                    # Create kubernetes directory if it doesn't exist
+                    mkdir -p kubernetes
+                    
+                    # Create deployment manifest
+                    cat << 'EOF' > kubernetes/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -156,28 +157,24 @@ spec:
         - containerPort: 80
           name: http
 EOF
-                    fi
-                    
+
                     # Replace BUILD_NUMBER with actual build number
                     sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g" kubernetes/deployment.yaml
 
                     echo "Applying Kubernetes manifests..."
-                    kubectl apply -f kubernetes/deployment.yaml || echo "Deployment failed, but continuing"
-                    kubectl apply -f kubernetes/service.yaml || echo "Service deployment failed, but continuing"
+                    kubectl apply -f kubernetes/deployment.yaml
+                    kubectl apply -f kubernetes/service.yaml
 
-                    # Wait for deployment resource to exist
-                    echo "Waiting for deployment resource to be created..."
-                    for i in {1..12}; do
-                        kubectl get deployment carvilla-web && break
-                        echo "Deployment not found yet, waiting 5s..."
+                    # Wait for deployment with retries
+                    echo "Waiting for deployment to be available..."
+                    for i in {1..24}; do
+                        if kubectl get deployment carvilla-web; then
+                            echo "Deployment found, waiting for rollout..."
+                            kubectl rollout status deployment/carvilla-web --timeout=300s && break
+                        fi
+                        echo "Attempt $i: Deployment not ready, waiting 5s..."
                         sleep 5
                     done
-
-                    echo "Waiting for deployment rollout to complete..."
-                    kubectl rollout status deployment/carvilla-web --timeout=120s || echo "Rollout status check failed, but continuing"
-
-                    echo "Waiting for all pods to be ready..."
-                    kubectl wait --for=condition=Ready pods -l app=carvilla-web --timeout=120s || echo "Pods not ready in time, but continuing"
                     '''
                 }
             }
@@ -188,30 +185,32 @@ EOF
                 container('ubuntu') {
                     sh '''
                     echo "Verifying deployment..."
-                    kubectl get pods -l app=carvilla-web -n default || echo "Failed to get pods"
-                    kubectl get svc carvilla-web-service -n default || echo "Failed to get service"
+                    kubectl get pods -l app=carvilla-web -n default
+                    kubectl get svc carvilla-web-service -n default
 
-                    # Wait for service endpoint to be available
+                    # Wait for endpoints with proper check
                     echo "Waiting for service endpoint to be available..."
-                    for i in {1..12}; do
-                        kubectl get endpoints carvilla-web-service -n default | grep -q '80:' && break
-                        echo "Service endpoint not ready yet, waiting 5s..."
+                    for i in {1..24}; do
+                        if kubectl get endpoints carvilla-web-service -n default | grep -q "[0-9]\\+:[0-9]\\+"; then
+                            echo "Service endpoint is available"
+                            break
+                        fi
+                        echo "Attempt $i: Service endpoint not ready, waiting 5s..."
                         sleep 5
                     done
 
-                    # Try to access the app with retries
-                    apt-get install -y curl
-                    echo "Trying to access the application..."
-                    for i in {1..12}; do
-                        if curl -s -I http://${K8S_MASTER}:${APP_PORT} | grep -q '200\\|301\\|302'; then
-                            echo "Application is accessible!"
+                    # Health check with proper wait
+                    echo "Checking application health..."
+                    for i in {1..24}; do
+                        if curl -s -I "http://${K8S_MASTER}:${APP_PORT}" | grep -q "200\\|301\\|302"; then
+                            echo "Application is responding successfully!"
                             break
-                        else
-                            echo "App not ready yet, retrying in 5s... ($i/12)"
-                            sleep 5
                         fi
-                        if [ $i -eq 12 ]; then
-                            echo "Failed to access the application after waiting."
+                        echo "Attempt $i: Application not ready, waiting 5s..."
+                        sleep 5
+                        if [ $i -eq 24 ]; then
+                            echo "Warning: Application health check timed out"
+                            exit 1
                         fi
                     done
                     '''
