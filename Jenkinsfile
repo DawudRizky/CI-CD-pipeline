@@ -195,7 +195,7 @@ EOF
                     apt-get install -y curl
                     echo "Trying to access the application..."
                     for i in {1..12}; do
-                        if curl -s -I http://${K8S_MASTER}:${APP_PORT} | grep -q '200\|301\|302'; then
+                        if curl -s -I http://${K8S_MASTER}:${APP_PORT} | grep -q '200\\|301\\|302'; then
                             echo "Application is accessible!"
                             break
                         else
