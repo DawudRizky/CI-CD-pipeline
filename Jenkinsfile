@@ -159,11 +159,19 @@ EOF
                     fi
                     
                     # Replace BUILD_NUMBER with actual build number
-                    sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g" kubernetes/deployment.yaml
+                    sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g kubernetes/deployment.yaml
 
                     echo "Applying Kubernetes manifests..."
                     kubectl apply -f kubernetes/deployment.yaml || echo "Deployment failed, but continuing"
                     kubectl apply -f kubernetes/service.yaml || echo "Service deployment failed, but continuing"
+
+                    # Wait for deployment resource to exist
+                    echo "Waiting for deployment resource to be created..."
+                    for i in {1..12}; do
+                        kubectl get deployment carvilla-web && break
+                        echo "Deployment not found yet, waiting 5s..."
+                        sleep 5
+                    done
 
                     echo "Waiting for deployment rollout to complete..."
                     kubectl rollout status deployment/carvilla-web --timeout=120s || echo "Rollout status check failed, but continuing"
