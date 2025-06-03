@@ -11,7 +11,7 @@ metadata:
 spec:
   containers:
     - name: ubuntu
-      image: 172.31.70.225:30500/ci-agent:latest
+      image: 172.31.36.11:30500/ci-agent:latest
       command:
         - cat
       tty: true
@@ -34,10 +34,10 @@ spec:
     }
     
     environment {
-        REGISTRY_URL = "172.31.70.225:30500"
+        REGISTRY_URL = "172.31.36.11:30500"
         IMAGE_NAME = "carvilla"
         APP_PORT = "30400"
-        K8S_MASTER = "172.31.70.225"
+        K8S_MASTER = "172.31.36.11"
     }
     
     stages {
@@ -150,7 +150,7 @@ spec:
     spec:
       containers:
       - name: carvilla-web
-        image: 172.31.70.225:30500/carvilla:BUILD_NUMBER
+        image: 172.31.36.11:30500/carvilla:BUILD_NUMBER
         imagePullPolicy: Always
         ports:
         - containerPort: 80
